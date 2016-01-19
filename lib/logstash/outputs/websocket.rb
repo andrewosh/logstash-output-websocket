@@ -18,16 +18,20 @@ class LogStash::Outputs::WebSocket < LogStash::Outputs::Base
   # The port to serve websocket data from
   config :port, :validate => :number, :default => 3232
 
+  def make_pubsub(topic)
+      pubsub = Logstash::Outputs::WebSocket::Pubsub.new
+      pubsub.logger = @logger
+  end
+
   public
   def register
     require "ftw"
     require "logstash/outputs/websocket/app"
     require "logstash/outputs/websocket/pubsub"
-    @pubsub = LogStash::Outputs::WebSocket::Pubsub.new
-    @pubsub.logger = @logger
-    @server = Thread.new(@pubsub) do |pubsub|
+    @channels = {}
+    @server = Thread.new(@channels) do |channels|
       begin
-        Rack::Handler::FTW.run(LogStash::Outputs::WebSocket::App.new(pubsub, @logger),
+        Rack::Handler::FTW.run(LogStash::Outputs::WebSocket::App.new(channels, @logger),
                                :Host => @host, :Port => @port)
       rescue => e
         @logger.error("websocket server failed", :exception => e)
@@ -39,8 +43,15 @@ class LogStash::Outputs::WebSocket < LogStash::Outputs::Base
 
   public
   def receive(event)
-    
-    @pubsub.publish(event.to_json)
+    json = event.to_json
+    topic = json.topic
+    if @channels.has_key?(topic) 
+      @channels[topic].publish(json)
+    else
+      pubsub = make_pubsub(topic) 
+      @channels[topic] = pubsub
+      pubsub.publish(json)
+    end # if
   end # def receive
 
 end # class LogStash::Outputs::Websocket
