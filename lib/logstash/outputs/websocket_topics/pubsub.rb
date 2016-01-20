@@ -1,6 +1,6 @@
 # encoding: utf-8
 require "logstash/namespace"
-require "logstash/outputs/websocket"
+require "logstash/outputs/websocket_topics"
 
 class LogStash::Outputs::WebSocket::Pubsub
   attr_accessor :logger

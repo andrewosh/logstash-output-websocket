@@ -1,6 +1,6 @@
 # encoding: utf-8
 require "logstash/namespace"
-require "logstash/outputs/websocket"
+require "logstash/outputs/websocket_topics"
 require "sinatra/base"
 require "rack/handler/ftw" # from ftw
 require "ftw/websocket/rack" # from ftw
